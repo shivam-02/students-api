@@ -1,6 +1,6 @@
 module github.com/shivam-02/students-api
 
-go 1.26.0
+go 1.25.0
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
