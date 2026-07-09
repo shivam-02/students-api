@@ -12,12 +12,20 @@ import (
 
 	"github.com/shivam-02/students-api/internal/config"
 	"github.com/shivam-02/students-api/internal/http/handlers/student"
+	"github.com/shivam-02/students-api/internal/storage/sqlite"
 )
 
 func main() {
 	cfg := config.MustLoad()
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	slog.Info("storage Initialized", slog.String("env", cfg.Env), slog.String("version", "1.0.0"))
 	router := http.NewServeMux()
-	router.HandleFunc("POST /api/students", student.New())
+	router.HandleFunc("POST /api/students", student.New(storage))
+	router.HandleFunc("GET /api/students/{id}", student.GetById(storage))
+	router.HandleFunc("GET /api/students", student.GetList(storage))
 	server := http.Server{
 		Addr:    cfg.Addr,
 		Handler: router,
