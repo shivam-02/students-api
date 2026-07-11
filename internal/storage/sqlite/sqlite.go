@@ -92,3 +92,38 @@ func (s *Sqlite) GetStudents() ([]types.Student, error) {
 	return students, nil
 
 }
+
+func (s *Sqlite) UpdateStudentById(id int64, name string, email string, age int) (int64, error) {
+	stmt, err := s.Db.Prepare("Update students set name=?,email=?, age=? where id=?")
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+	result, err := stmt.Exec(name, email, age, id)
+	if err != nil {
+		return 0, nil
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, nil
+	}
+	return rowsAffected, nil
+
+}
+
+func (s *Sqlite) DeleteById(id int64) (int64, error) {
+	stmt, err := s.Db.Prepare("Delete from students where id=?")
+	if err != nil {
+		return 0, nil
+	}
+	defer stmt.Close()
+	result, err := stmt.Exec(id)
+	if err != nil {
+		return 0, nil
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, nil
+	}
+	return rowsAffected, nil
+}

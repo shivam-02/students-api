@@ -76,3 +76,61 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, students)
 	}
 }
+
+func UpdateById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		var student types.Student
+		err := json.NewDecoder(r.Body).Decode(&student)
+		if errors.Is(err, io.EOF) {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("empty body")))
+			return
+		}
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, err)
+			return
+		}
+		slog.Info("Request recieve to update student with id", slog.String("id", id))
+		if err := validator.New().Struct(student); err != nil {
+			validateErrs := err.(validator.ValidationErrors)
+			response.WriteJson(w, http.StatusBadRequest, response.ValidationError(validateErrs))
+			return
+		}
+		intId, err := strconv.Atoi(id)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, err)
+			return
+		}
+		rowsAffected, err := storage.UpdateStudentById(
+			int64(intId),
+			student.Name,
+			student.Email,
+			student.Age,
+		)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, err)
+			return
+		}
+		slog.Info("Rows Affected :", slog.Int("rows affected", int(rowsAffected)))
+		response.WriteJson(w, http.StatusOK, map[string]int64{"Rows affected": rowsAffected})
+	}
+}
+
+func DeleteById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		intId, err := strconv.Atoi(id)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, err)
+			return
+		}
+		rowsAffected, err := storage.DeleteById(int64(intId))
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, err)
+			return
+		}
+		slog.Info("Rows Affected: ", slog.Int("rows affected", int(rowsAffected)))
+		response.WriteJson(w, http.StatusOK, map[string]int64{"Rows affected": rowsAffected})
+
+	}
+}
